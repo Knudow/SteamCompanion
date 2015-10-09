@@ -43,6 +43,7 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadProfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.autosaveloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gameDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectedGameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getCategoriesAndTagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -57,25 +58,25 @@
             this.showGamesWithoutImagesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.getNewGames = new System.Windows.Forms.Button();
             this.textGameFilter = new System.Windows.Forms.TextBox();
-            this.autosaveloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // textUserName
             // 
-            this.textUserName.Location = new System.Drawing.Point(12, 32);
+            this.textUserName.Location = new System.Drawing.Point(76, 32);
             this.textUserName.Name = "textUserName";
-            this.textUserName.Size = new System.Drawing.Size(381, 20);
+            this.textUserName.Size = new System.Drawing.Size(258, 20);
             this.textUserName.TabIndex = 0;
             // 
             // getAllGames
             // 
-            this.getAllGames.Location = new System.Drawing.Point(397, 30);
+            this.getAllGames.Location = new System.Drawing.Point(340, 30);
             this.getAllGames.Name = "getAllGames";
-            this.getAllGames.Size = new System.Drawing.Size(70, 23);
+            this.getAllGames.Size = new System.Drawing.Size(100, 23);
             this.getAllGames.TabIndex = 1;
-            this.getAllGames.Text = "Get all";
+            this.getAllGames.Text = "Get all games";
             this.getAllGames.UseVisualStyleBackColor = true;
             this.getAllGames.Click += new System.EventHandler(this.getAllGames_Click);
             // 
@@ -196,16 +197,23 @@
             // saveProfileToolStripMenuItem
             // 
             this.saveProfileToolStripMenuItem.Name = "saveProfileToolStripMenuItem";
-            this.saveProfileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveProfileToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.saveProfileToolStripMenuItem.Text = "Save profile";
             this.saveProfileToolStripMenuItem.Click += new System.EventHandler(this.saveProfileToolStripMenuItem_Click);
             // 
             // loadProfileToolStripMenuItem
             // 
             this.loadProfileToolStripMenuItem.Name = "loadProfileToolStripMenuItem";
-            this.loadProfileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.loadProfileToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.loadProfileToolStripMenuItem.Text = "Load profile";
             this.loadProfileToolStripMenuItem.Click += new System.EventHandler(this.loadProfileToolStripMenuItem_Click);
+            // 
+            // autosaveloadToolStripMenuItem
+            // 
+            this.autosaveloadToolStripMenuItem.CheckOnClick = true;
+            this.autosaveloadToolStripMenuItem.Name = "autosaveloadToolStripMenuItem";
+            this.autosaveloadToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
+            this.autosaveloadToolStripMenuItem.Text = "Autosave/load";
             // 
             // gameDataToolStripMenuItem
             // 
@@ -223,7 +231,7 @@
             this.getImagesToolStripMenuItem,
             this.getBothToolStripMenuItem});
             this.selectedGameToolStripMenuItem.Name = "selectedGameToolStripMenuItem";
-            this.selectedGameToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.selectedGameToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.selectedGameToolStripMenuItem.Text = "Selected game";
             // 
             // getCategoriesAndTagsToolStripMenuItem
@@ -254,7 +262,7 @@
             this.getImagesToolStripMenuItem1,
             this.getAllToolStripMenuItem});
             this.allGamesToolStripMenuItem.Name = "allGamesToolStripMenuItem";
-            this.allGamesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.allGamesToolStripMenuItem.Size = new System.Drawing.Size(151, 22);
             this.allGamesToolStripMenuItem.Text = "All games";
             // 
             // getCategoriesAndTagsToolStripMenuItem1
@@ -303,11 +311,11 @@
             // 
             // getNewGames
             // 
-            this.getNewGames.Location = new System.Drawing.Point(473, 30);
+            this.getNewGames.Location = new System.Drawing.Point(443, 30);
             this.getNewGames.Name = "getNewGames";
-            this.getNewGames.Size = new System.Drawing.Size(70, 23);
+            this.getNewGames.Size = new System.Drawing.Size(100, 23);
             this.getNewGames.TabIndex = 13;
-            this.getNewGames.Text = "Update";
+            this.getNewGames.Text = "Update game list";
             this.getNewGames.UseVisualStyleBackColor = true;
             this.getNewGames.Click += new System.EventHandler(this.getNewGames_Click);
             // 
@@ -319,18 +327,21 @@
             this.textGameFilter.TabIndex = 14;
             this.textGameFilter.TextChanged += new System.EventHandler(this.textGameFilter_TextChanged);
             // 
-            // autosaveloadToolStripMenuItem
+            // label1
             // 
-            this.autosaveloadToolStripMenuItem.CheckOnClick = true;
-            this.autosaveloadToolStripMenuItem.Name = "autosaveloadToolStripMenuItem";
-            this.autosaveloadToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.autosaveloadToolStripMenuItem.Text = "Autosave/load";
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(12, 35);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(58, 13);
+            this.label1.TabIndex = 15;
+            this.label1.Text = "Username:";
             // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1414, 561);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.textGameFilter);
             this.Controls.Add(this.getNewGames);
             this.Controls.Add(this.label5);
@@ -390,6 +401,7 @@
         private System.Windows.Forms.Button getNewGames;
         private System.Windows.Forms.TextBox textGameFilter;
         private System.Windows.Forms.ToolStripMenuItem autosaveloadToolStripMenuItem;
+        private System.Windows.Forms.Label label1;
     }
 }
 

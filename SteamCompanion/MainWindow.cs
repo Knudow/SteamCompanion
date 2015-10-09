@@ -4,9 +4,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Xml.Serialization;
@@ -126,6 +128,7 @@ namespace SteamCompanion
             {
                 //Check user profile and obtain all games and ids
                 WebClient x = new WebClient();
+                x.Encoding = Encoding.UTF8;
                 x.Headers.Add(HttpRequestHeader.Cookie, "birthtime=-2208959999");
 
                 string source = x.DownloadString("http://steamcommunity.com/id/" + textUserName.Text + "/games/?tab=all");
@@ -144,8 +147,11 @@ namespace SteamCompanion
                     foreach (Match ma in matches)
                     {
                         Game aux_game = new Game();
-                        aux_game.id = ma.Groups[1].Value.Trim();
-                        aux_game.name = ma.Groups[2].Value.Trim();
+                        aux_game.id = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim());;
+                        aux_game.name = WebUtility.HtmlDecode(ma.Groups[2].Value.Trim());
+                        //Because some games have unicode characters, we look for \u followed by 4 characters and convert that into a single character
+                        Regex rx = new Regex(@"\\[uU]([0-9A-Fa-f]{4})");
+                        aux_game.name = rx.Replace(aux_game.name, match => ((char)Int32.Parse(match.Value.Substring(2), NumberStyles.HexNumber)).ToString());
                         games.Add(aux_game);
                         load(aux_game);
                     }
@@ -172,8 +178,11 @@ namespace SteamCompanion
                     foreach (Match ma in matches)
                     {
                         Game aux_game = new Game();
-                        aux_game.id = ma.Groups[1].Value.Trim();
-                        aux_game.name = ma.Groups[2].Value.Trim();
+                        aux_game.id = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim());;
+                        aux_game.name = WebUtility.HtmlDecode(ma.Groups[2].Value.Trim());
+                        //Because some games have unicode characters, we look for \u followed by 4 characters and convert that into a single character
+                        Regex rx = new Regex(@"\\[uU]([0-9A-Fa-f]{4})");
+                        aux_game.name = rx.Replace(aux_game.name, match => ((char)Int32.Parse(match.Value.Substring(2), NumberStyles.HexNumber)).ToString());
                         if (ids.Contains(Int32.Parse(aux_game.id)))
                         {
                             Console.Write("Game " + aux_game.name + " (" + aux_game.id + ") already exists\n");
@@ -232,7 +241,7 @@ namespace SteamCompanion
             {
                 foreach (Match ma in matches)
                 {
-                    string tag = ma.Groups[1].Value.Trim();
+                    string tag = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim());;
                     if (!string.IsNullOrWhiteSpace(tag))
                     {
                         aux_game.tags.Add(tag);
@@ -249,7 +258,7 @@ namespace SteamCompanion
             {
                 foreach (Match ma in matches)
                 {
-                    string genre = ma.Groups[1].Value.Trim();
+                    string genre = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim());;
                     if (!string.IsNullOrWhiteSpace(genre))
                     {
                         aux_game.genres.Add(genre);
