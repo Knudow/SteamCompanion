@@ -143,6 +143,9 @@ namespace SteamCompanion
                         load(aux_game);
                     }
                 }
+                //We update all the listboxes in the form
+                listbox_games.DataSource = null;
+                generate_list();
             }
         }
 
@@ -172,7 +175,7 @@ namespace SteamCompanion
                         {
                             //If it doesn't exist, we ask the user if they want to add the game to the list
                             Console.Write("New game found: " + aux_game.name + "(" + aux_game.id + ")\n");
-                            DialogResult dialogResult = MessageBox.Show("Do you want to add " + aux_game.name + " (" + aux_game.id + ") to the list?", "Delete confirmation", MessageBoxButtons.YesNoCancel);
+                            DialogResult dialogResult = MessageBox.Show("Do you want to add " + aux_game.name + " (" + aux_game.id + ") to the list?", "New game found", MessageBoxButtons.YesNoCancel);
                             switch(dialogResult)
                             {
                                 case DialogResult.Cancel:
@@ -209,8 +212,8 @@ namespace SteamCompanion
             Game aux_game;
 
             aux_game.name = title;
-            Console.Write("Processing data for " + aux_game.name + "\n");
             aux_game.id = id;
+            Console.Write("Processing data for " + aux_game.name + " with ID: " + aux_game.id + "\n");
             aux_game.genres = new List<string>();
             aux_game.tags = new List<string>();
 
@@ -257,6 +260,7 @@ namespace SteamCompanion
 
             string source = x.DownloadString("http://store.steampowered.com/app/" + id + "/?snr=1_4_4__131");
 
+            Console.Write("Processing images for game " + id + "\n");
             MatchCollection matches = Regex.Matches(source, "screenshotid=\"(.+)\" target");
             int downloaded = 0;
             if (matches.Count > 0)
@@ -279,6 +283,7 @@ namespace SteamCompanion
                             try
                             {
                                 x.DownloadFile("http://cdn.akamai.steamstatic.com/steam/apps/" + id + "/" + captura, photoPath + "/" + captura);
+                                Console.Write("   Downloading image " + captura + "\n");
                                 downloaded++;
                             }
                             catch (WebException ex)
@@ -529,6 +534,24 @@ namespace SteamCompanion
                     generate_list();
                     listbox_games.SelectedIndex = listbox_games.Items.IndexOf(orig);
                 }
+
+                listbox_games.DataSource = null;
+                generate_list();
+            }
+        }
+
+        private void getImagesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listbox_games.SelectedItems.Count > 0)
+            {
+                string id = ((Game)listbox_games.SelectedItem).id;
+                get_images(id);
+                if (game_images.Count > 0)
+                {
+                    Random rnd = new Random();
+                    img_index = rnd.Next(0, game_images.Count);
+                    pictureBox1.Image = game_images[img_index];
+                }
             }
         }
 
@@ -540,12 +563,14 @@ namespace SteamCompanion
                 if (!aux_game.name.Equals(""))
                 {
                     games.Remove(((Game)listbox_games.SelectedItem));
-                    listbox_games.Items.Remove(((Game)listbox_games.SelectedItem));
+                    listbox_games.DataSource = null;
                     games.Add(aux_game);
                     get_images(aux_game.id);
                     load(aux_game);
                     listbox_games.SelectedIndex = listbox_games.Items.IndexOf(aux_game);
                 }
+                listbox_games.DataSource = null;
+                generate_list();
             }
         }
 
@@ -581,29 +606,11 @@ namespace SteamCompanion
 
             listbox_games.SelectedIndex = 0;
         }
-
-        private void getImagesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (listbox_games.SelectedItems.Count > 0)
-            {
-                string id = ((Game)listbox_games.SelectedItem).id;
-                Console.Write("Processing images for " + ((Game)listbox_games.SelectedItem).name + "\n");
-                get_images(id);
-                if (game_images.Count > 0)
-                {
-                    Random rnd = new Random();
-                    img_index = rnd.Next(0, game_images.Count);
-                    pictureBox1.Image = game_images[img_index];
-                }
-            }
-        }
-
         private void getImagesToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             foreach (Game g in listbox_games.Items)
             {
                 string id = g.id;
-                Console.Write("Processing images for " + g.name + "\n");
                 get_images(id);
             }
             listbox_games.SelectedIndex = 0;
@@ -631,14 +638,13 @@ namespace SteamCompanion
             }
 
             listbox_games.DataSource = null;
+            generate_list();
 
-            foreach (Game g in games)
+            foreach (Game g in listbox_games.Items)
             {
                 get_images(g.id);
                 load(g);
             }
-
-            generate_list();
 
             listbox_games.SelectedIndex = 0;
         }
