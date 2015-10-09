@@ -1,5 +1,4 @@
 # SteamCompanion
-Manage your Steam games
 
 Do you have hundreds of games and you don't know what half of them even look like? SteamCompanion can help you
 
