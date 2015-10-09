@@ -131,6 +131,13 @@ namespace SteamCompanion
                 string source = x.DownloadString("http://steamcommunity.com/id/" + textUserName.Text + "/games/?tab=all");
                 MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo", RegexOptions.IgnoreCase);
 
+                games.Clear();
+                listbox_categories.Items.Clear();
+                listbox_tags.Items.Clear();
+
+                games_by_genre.Clear();
+                games_by_tag.Clear();
+
                 //For each result, we create a game with the obtained name and ID and add it to the list
                 if (matches.Count > 0)
                 {
