@@ -91,6 +91,11 @@ namespace SteamCompanion
 
             //We add the game's ID to the list of all IDs
             ids.Add(Int32.Parse(game.id));
+
+            //Update status bar
+            toolStripStatusLabel1.Text = games_by_genre.Count + " Categories";
+            toolStripStatusLabel2.Text = games_by_tag.Count + " Tags";
+            toolStripStatusLabel3.Text = games.Count + " Games";
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -780,6 +785,11 @@ namespace SteamCompanion
             //Then we make the listbox show the obtained games
             listbox_games.DataSource = null;
             listbox_games.DataSource = gamelistaux;
+
+            //Update status bar
+            toolStripStatusLabel1.Text = games_by_genre.Count + " Categories";
+            toolStripStatusLabel2.Text = games_by_tag.Count + " Tags";
+            toolStripStatusLabel3.Text = games.Count + " Games";
         }
 
         private void listbox_games_DoubleClick(object sender, EventArgs e)
