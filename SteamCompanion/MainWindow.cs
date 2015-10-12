@@ -173,25 +173,9 @@ namespace SteamCompanion
                         //If we don't get "hours_forever" that means we haven't played it
                         else
                         {
-                            /*if (WebUtility.HtmlDecode(ma.Groups[5].Value.Trim()).Equals("hours_forever"))
-                            {
-                                //If hours_forever is on the second part, the hours can be "XX, we have to remove the "
-                                string hours = WebUtility.HtmlDecode(ma.Groups[6].Value.Trim());
-                                if (hours[0] == '\"')
-                                    hours = hours.Remove(0, 1);
-                                float hours_played = float.Parse(hours);
-                                if (hours_played <= 1)
-                                {
-                                    aux_game.tags = new List<string>();
-                                    aux_game.tags.Add("Less than 1h played");
-                                }
-                            }
-                            else
-                            {*/
                                 aux_game.tags = new List<string>();
                                 aux_game.tags.Add("Less than 1h played");
                                 aux_game.tags.Add("Never played");
-                            //}
                         }
                         games.Add(aux_game);
                         load(aux_game);
@@ -282,52 +266,68 @@ namespace SteamCompanion
             x.Encoding = Encoding.UTF8;
             x.Headers.Add(HttpRequestHeader.Cookie, "birthtime=-2208959999");
 
-            string source = x.DownloadString("http://store.steampowered.com/app/" + id + "/?snr=1_4_4__131");
+            string source = x.DownloadString("http://store.steampowered.com/app/" + id);
 
-            Match match = Regex.Match(source, "<div class=\"apphub_AppName\">(.+)</div>", RegexOptions.IgnoreCase);
-            string title = WebUtility.HtmlDecode(match.Groups[1].Value);
-            //Because some games have unicode characters, we look for \u followed by 4 characters and convert that into a single character
-            Regex rx = new Regex(@"\\[uU]([0-9A-Fa-f]{4})");
-            title = rx.Replace(title, matchutf => ((char)Int32.Parse(matchutf.Value.Substring(2), NumberStyles.HexNumber)).ToString());
-
-            Game aux_game;
-
-            aux_game.name = title;
+            Game aux_game = new Game();
+            //data-appid="31290"
+            Match match = Regex.Match(source, "data-appid=\"(\\d+?)\"", RegexOptions.IgnoreCase);
+            aux_game.name = "";
             aux_game.id = id;
-            Console.Write("Processing data for " + aux_game.name + " with ID: " + aux_game.id + "\n");
-            aux_game.genres = new List<string>();
-            aux_game.tags = new List<string>();
 
-            Regex regTags = new Regex("<a[^>]*class=\\\"app_tag\\\"[^>]*>([^<]*)</a>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
-            //We add each found tag to the game
-            MatchCollection matches = regTags.Matches(source);
-            if (matches.Count > 0)
+            if (match.Success)
             {
-                foreach (Match ma in matches)
+                string appid = WebUtility.HtmlDecode(match.Groups[1].Value);
+                //We check if the ID returned by the store is the same as the game's ID. We can remove things like Back to the future episodes this way, or duplicated games
+                if (appid == id)
                 {
-                    string tag = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim());;
-                    if (!string.IsNullOrWhiteSpace(tag))
+                    match = Regex.Match(source, "<div class=\"apphub_AppName\">(.+)</div>", RegexOptions.IgnoreCase);
+                    string title = WebUtility.HtmlDecode(match.Groups[1].Value);
+                    //Because some games have unicode characters, we look for \u followed by 4 characters and convert that into a single character
+                    Regex rx = new Regex(@"\\[uU]([0-9A-Fa-f]{4})");
+                    title = rx.Replace(title, matchutf => ((char)Int32.Parse(matchutf.Value.Substring(2), NumberStyles.HexNumber)).ToString());
+
+                    aux_game.name = title;
+                    aux_game.id = id;
+                    Console.Write("Processing data for " + aux_game.name + " with ID: " + aux_game.id + "\n");
+                    aux_game.genres = new List<string>();
+                    aux_game.tags = new List<string>();
+
+                    Regex regTags = new Regex("<a[^>]*class=\\\"app_tag\\\"[^>]*>([^<]*)</a>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+                    //We add each found tag to the game
+                    MatchCollection matches = regTags.Matches(source);
+                    if (matches.Count > 0)
                     {
-                        aux_game.tags.Add(tag);
+                        foreach (Match ma in matches)
+                        {
+                            string tag = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim()); ;
+                            if (!string.IsNullOrWhiteSpace(tag))
+                            {
+                                aux_game.tags.Add(tag);
+                            }
+                        }
+                    }
+
+                    string regexp = "\"description\":\"(.*?)\"";
+                    source = x.DownloadString("http://store.steampowered.com/api/appdetails/?appids=" + id);
+
+                    //We add each found genre to the game
+                    matches = Regex.Matches(source, regexp);
+                    if (matches.Count > 0)
+                    {
+                        foreach (Match ma in matches)
+                        {
+                            string genre = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim()); ;
+                            if (!string.IsNullOrWhiteSpace(genre))
+                            {
+                                aux_game.genres.Add(genre);
+                            }
+                        }
                     }
                 }
-            }
-
-            string regexp = "\"description\":\"(.*?)\"";
-            source = x.DownloadString("http://store.steampowered.com/api/appdetails/?appids=" + id);
-
-            //We add each found genre to the game
-            matches = Regex.Matches(source, regexp);
-            if (matches.Count > 0)
-            {
-                foreach (Match ma in matches)
+                else
                 {
-                    string genre = WebUtility.HtmlDecode(ma.Groups[1].Value.Trim());;
-                    if (!string.IsNullOrWhiteSpace(genre))
-                    {
-                        aux_game.genres.Add(genre);
-                    }
+                    aux_game.id = "-1";
                 }
             }
 
@@ -594,36 +594,44 @@ namespace SteamCompanion
             if (listbox_games.SelectedItems.Count > 0)
             {
                 Game aux_game = get_tags_genres(((Game)listbox_games.SelectedItem).id);
-                if (!aux_game.name.Equals(""))
+                if (!aux_game.id.Equals("-1"))
                 {
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (((Game)listbox_games.SelectedItem).genres != null) aux_game.genres = aux_game.genres.Union(((Game)listbox_games.SelectedItem).genres).ToList();
-                    if (((Game)listbox_games.SelectedItem).tags != null) aux_game.tags = aux_game.tags.Union(((Game)listbox_games.SelectedItem).tags).ToList();
+                    if (!aux_game.name.Equals(""))
+                    {
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (((Game)listbox_games.SelectedItem).genres != null) aux_game.genres = aux_game.genres.Union(((Game)listbox_games.SelectedItem).genres).ToList();
+                        if (((Game)listbox_games.SelectedItem).tags != null) aux_game.tags = aux_game.tags.Union(((Game)listbox_games.SelectedItem).tags).ToList();
 
-                    games.Remove(((Game)listbox_games.SelectedItem));
-                    listbox_games.DataSource = null;
-                    games.Add(aux_game);
-                    load(aux_game);
-                    generate_list();
-                    listbox_games.SelectedIndex = listbox_games.Items.IndexOf(aux_game);
+                        games.Remove(((Game)listbox_games.SelectedItem));
+                        listbox_games.DataSource = null;
+                        games.Add(aux_game);
+                        load(aux_game);
+                        generate_list();
+                        listbox_games.SelectedIndex = listbox_games.Items.IndexOf(aux_game);
+                    }
+                    else
+                    {
+                        Game orig = ((Game)listbox_games.SelectedItem);
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (orig.genres == null) orig.genres = new List<string>();
+                        if (orig.tags == null) orig.tags = new List<string>();
+                        orig.tags = orig.tags.Union(aux_game.tags).ToList();
+                        orig.genres = orig.genres.Union(aux_game.genres).ToList();
+
+                        games.Remove(((Game)listbox_games.SelectedItem));
+                        listbox_games.DataSource = null;
+                        games.Add(orig);
+                        load(orig);
+                        generate_list();
+                        listbox_games.SelectedIndex = listbox_games.Items.IndexOf(orig);
+                    }
                 }
                 else
                 {
-                    Game orig = ((Game)listbox_games.SelectedItem);
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (orig.genres == null) orig.genres = new List<string>();
-                    if (orig.tags == null) orig.tags = new List<string>();
-                    orig.tags = orig.tags.Union(aux_game.tags).ToList();
-                    orig.genres = orig.genres.Union(aux_game.genres).ToList();
-
+                    ids.Remove(Int32.Parse(((Game)listbox_games.SelectedItem).id));
                     games.Remove(((Game)listbox_games.SelectedItem));
-                    listbox_games.DataSource = null;
-                    games.Add(orig);
-                    load(orig);
-                    generate_list();
-                    listbox_games.SelectedIndex = listbox_games.Items.IndexOf(orig);
                 }
 
                 listbox_games.DataSource = null;
@@ -651,39 +659,49 @@ namespace SteamCompanion
             if (listbox_games.SelectedItems.Count > 0)
             {
                 Game aux_game = get_tags_genres(((Game)listbox_games.SelectedItem).id);
-                if (!aux_game.name.Equals(""))
+                
+                if (!aux_game.id.Equals("-1"))
                 {
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (((Game)listbox_games.SelectedItem).genres != null) aux_game.genres = aux_game.genres.Union(((Game)listbox_games.SelectedItem).genres).ToList();
-                    if (((Game)listbox_games.SelectedItem).tags != null) aux_game.tags = aux_game.tags.Union(((Game)listbox_games.SelectedItem).tags).ToList();
+                    if (!aux_game.name.Equals(""))
+                    {
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (((Game)listbox_games.SelectedItem).genres != null) aux_game.genres = aux_game.genres.Union(((Game)listbox_games.SelectedItem).genres).ToList();
+                        if (((Game)listbox_games.SelectedItem).tags != null) aux_game.tags = aux_game.tags.Union(((Game)listbox_games.SelectedItem).tags).ToList();
 
-                    games.Remove(((Game)listbox_games.SelectedItem));
-                    listbox_games.DataSource = null;
-                    games.Add(aux_game);
-                    get_images(aux_game.id);
-                    load(aux_game);
-                    generate_list();
-                    listbox_games.SelectedIndex = listbox_games.Items.IndexOf(aux_game);
+                        games.Remove(((Game)listbox_games.SelectedItem));
+                        listbox_games.DataSource = null;
+                        games.Add(aux_game);
+                        get_images(aux_game.id);
+                        load(aux_game);
+                        generate_list();
+                        listbox_games.SelectedIndex = listbox_games.Items.IndexOf(aux_game);
+                    }
+                    else
+                    {
+                        Game orig = ((Game)listbox_games.SelectedItem);
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (orig.genres == null) orig.genres = new List<string>();
+                        if (orig.tags == null) orig.tags = new List<string>();
+                        orig.tags = orig.tags.Union(aux_game.tags).ToList();
+                        orig.genres = orig.genres.Union(aux_game.genres).ToList();
+
+                        games.Remove(((Game)listbox_games.SelectedItem));
+                        listbox_games.DataSource = null;
+                        games.Add(orig);
+                        get_images(orig.id);
+                        load(orig);
+                        generate_list();
+                        listbox_games.SelectedIndex = listbox_games.Items.IndexOf(orig);
+                    }
                 }
                 else
                 {
-                    Game orig = ((Game)listbox_games.SelectedItem);
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (orig.genres == null) orig.genres = new List<string>();
-                    if (orig.tags == null) orig.tags = new List<string>();
-                    orig.tags = orig.tags.Union(aux_game.tags).ToList();
-                    orig.genres = orig.genres.Union(aux_game.genres).ToList();
-
+                    ids.Remove(Int32.Parse(((Game)listbox_games.SelectedItem).id));
                     games.Remove(((Game)listbox_games.SelectedItem));
-                    listbox_games.DataSource = null;
-                    games.Add(orig);
-                    get_images(orig.id);
-                    load(orig);
-                    generate_list();
-                    listbox_games.SelectedIndex = listbox_games.Items.IndexOf(orig);
                 }
+
                 listbox_games.DataSource = null;
                 generate_list();
             }
@@ -694,28 +712,37 @@ namespace SteamCompanion
             foreach (Game g in listbox_games.Items)
             {
                 Game aux_game = get_tags_genres(g.id);
-                if (!aux_game.name.Equals(""))
+                
+                if (!aux_game.id.Equals("-1"))
                 {
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (g.genres != null) aux_game.genres = aux_game.genres.Union(g.genres).ToList();
-                    if (g.tags != null) aux_game.tags = aux_game.tags.Union(g.tags).ToList();
+                    if (!aux_game.name.Equals(""))
+                    {
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (g.genres != null) aux_game.genres = aux_game.genres.Union(g.genres).ToList();
+                        if (g.tags != null) aux_game.tags = aux_game.tags.Union(g.tags).ToList();
 
-                    games.Remove(g);
-                    games.Add(aux_game);
+                        games.Remove(g);
+                        games.Add(aux_game);
+                    }
+                    else
+                    {
+                        Game orig = g;
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (orig.genres == null) orig.genres = new List<string>();
+                        if (orig.tags == null) orig.tags = new List<string>();
+                        orig.tags = orig.tags.Union(aux_game.tags).ToList();
+                        orig.genres = orig.genres.Union(aux_game.genres).ToList();
+
+                        games.Remove(g);
+                        games.Add(orig);
+                    }
                 }
                 else
                 {
-                    Game orig = g;
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (orig.genres == null) orig.genres = new List<string>();
-                    if (orig.tags == null) orig.tags = new List<string>();
-                    orig.tags = orig.tags.Union(aux_game.tags).ToList();
-                    orig.genres = orig.genres.Union(aux_game.genres).ToList();
-
+                    ids.Remove(Int32.Parse(g.id));
                     games.Remove(g);
-                    games.Add(orig);
                 }
             }
 
@@ -745,27 +772,36 @@ namespace SteamCompanion
             foreach (Game g in listbox_games.Items)
             {
                 Game aux_game = get_tags_genres(g.id);
-                if (!aux_game.name.Equals(""))
+                
+                if (!aux_game.id.Equals("-1"))
                 {
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (g.genres != null) aux_game.genres = aux_game.genres.Union(g.genres).ToList();
-                    if (g.tags != null) aux_game.tags = aux_game.tags.Union(g.tags).ToList();
-                    games.Remove(g);
-                    games.Add(aux_game);
+                    if (!aux_game.name.Equals(""))
+                    {
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (g.genres != null) aux_game.genres = aux_game.genres.Union(g.genres).ToList();
+                        if (g.tags != null) aux_game.tags = aux_game.tags.Union(g.tags).ToList();
+                        games.Remove(g);
+                        games.Add(aux_game);
+                    }
+                    else
+                    {
+                        Game orig = g;
+                        if (aux_game.genres == null) aux_game.genres = new List<string>();
+                        if (aux_game.tags == null) aux_game.tags = new List<string>();
+                        if (orig.genres == null) orig.genres = new List<string>();
+                        if (orig.tags == null) orig.tags = new List<string>();
+                        orig.tags = orig.tags.Union(aux_game.tags).ToList();
+                        orig.genres = orig.genres.Union(aux_game.genres).ToList();
+
+                        games.Remove(g);
+                        games.Add(orig);
+                    }
                 }
                 else
                 {
-                    Game orig = g;
-                    if (aux_game.genres == null) aux_game.genres = new List<string>();
-                    if (aux_game.tags == null) aux_game.tags = new List<string>();
-                    if (orig.genres == null) orig.genres = new List<string>();
-                    if (orig.tags == null) orig.tags = new List<string>();
-                    orig.tags = orig.tags.Union(aux_game.tags).ToList();
-                    orig.genres = orig.genres.Union(aux_game.genres).ToList();
-
+                    ids.Remove(Int32.Parse(g.id));
                     games.Remove(g);
-                    games.Add(orig);
                 }
             }
 

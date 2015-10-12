@@ -46,19 +46,25 @@ namespace SteamCompanion
             listbox_tags.ClearSelected();
 
             //We select the tags/categories that the selected game has
-            if (g.genres.Count > 0)
+            if (g.genres != null)
             {
-                foreach (String s in g.genres)
+                if (g.genres.Count > 0)
                 {
-                    listbox_categories.SetSelected(listbox_categories.FindStringExact(s), true);
+                    foreach (String s in g.genres)
+                    {
+                        listbox_categories.SetSelected(listbox_categories.FindStringExact(s), true);
+                    }
                 }
             }
 
-            if (g.tags.Count > 0)
+            if (g.tags != null)
             {
-                foreach (String s in g.tags)
+                if (g.tags.Count > 0)
                 {
-                    listbox_tags.SetSelected(listbox_tags.FindStringExact(s), true);
+                    foreach (String s in g.tags)
+                    {
+                        listbox_tags.SetSelected(listbox_tags.FindStringExact(s), true);
+                    }
                 }
             }
         }
