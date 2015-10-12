@@ -139,7 +139,8 @@ namespace SteamCompanion
                 string source = x.DownloadString("http://steamcommunity.com/id/" + textUserName.Text + "/games/?tab=all");
                 //MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo", RegexOptions.IgnoreCase);
                 //appid\":(\\d+),\"name\":\"(.*?)\",\"logo.*friendlyURL\":.+?,\"(.*?)\":\"(.+?)\"
-                MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo.*?friendlyURL\":.+?,\"(.*?)\":\"(.+?)\",\"(.*?)\":\"(.+?)\"", RegexOptions.IgnoreCase);
+                //MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo.*?friendlyURL\":.+?,\"(.*?)\":\"(.+?)\",\"(.*?)\":(.+?)\"", RegexOptions.IgnoreCase);
+                MatchCollection matches = Regex.Matches(source, "{\"appid\":(\\d+),\"name\":\"(.+?)\"(.*?)}(.*?)}", RegexOptions.IgnoreCase);
 
                 games.Clear();
                 listbox_categories.Items.Clear();
@@ -159,9 +160,10 @@ namespace SteamCompanion
                         //Because some games have unicode characters, we look for \u followed by 4 characters and convert that into a single character
                         Regex rx = new Regex(@"\\[uU]([0-9A-Fa-f]{4})");
                         aux_game.name = rx.Replace(aux_game.name, match => ((char)Int32.Parse(match.Value.Substring(2), NumberStyles.HexNumber)).ToString());
-                        if(WebUtility.HtmlDecode(ma.Groups[3].Value.Trim()).Equals("hours_forever"))
+                        Match hours = Regex.Match(WebUtility.HtmlDecode(ma.Groups[3].Value.Trim()), "hours_forever\":\"(.+?)\"");
+                        if(hours.Success)
                         {
-                            float hours_played = float.Parse(WebUtility.HtmlDecode(ma.Groups[4].Value.Trim()));
+                            float hours_played = float.Parse(hours.Value.Trim());
                             if (hours_played <= 1)
                             {
                                 aux_game.tags = new List<string>();
@@ -171,9 +173,13 @@ namespace SteamCompanion
                         //If we don't get "hours_forever" that means we haven't played it
                         else
                         {
-                            if (WebUtility.HtmlDecode(ma.Groups[5].Value.Trim()).Equals("hours_forever"))
+                            /*if (WebUtility.HtmlDecode(ma.Groups[5].Value.Trim()).Equals("hours_forever"))
                             {
-                                float hours_played = float.Parse(WebUtility.HtmlDecode(ma.Groups[6].Value.Trim()));
+                                //If hours_forever is on the second part, the hours can be "XX, we have to remove the "
+                                string hours = WebUtility.HtmlDecode(ma.Groups[6].Value.Trim());
+                                if (hours[0] == '\"')
+                                    hours = hours.Remove(0, 1);
+                                float hours_played = float.Parse(hours);
                                 if (hours_played <= 1)
                                 {
                                     aux_game.tags = new List<string>();
@@ -181,11 +187,11 @@ namespace SteamCompanion
                                 }
                             }
                             else
-                            {
+                            {*/
                                 aux_game.tags = new List<string>();
                                 aux_game.tags.Add("Less than 1h played");
                                 aux_game.tags.Add("Never played");
-                            }
+                            //}
                         }
                         games.Add(aux_game);
                         load(aux_game);
@@ -208,7 +214,8 @@ namespace SteamCompanion
 
                 string source = x.DownloadString("http://steamcommunity.com/id/" + textUserName.Text + "/games/?tab=all");
                 //MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo", RegexOptions.IgnoreCase);
-                MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo.*?friendlyURL\":.+?,\"(.*?)\":\"(.+?)\"", RegexOptions.IgnoreCase);
+                //MatchCollection matches = Regex.Matches(source, "appid\":(\\d+),\"name\":\"(.*?)\",\"logo.*?friendlyURL\":.+?,\"(.*?)\":\"(.+?)\"", RegexOptions.IgnoreCase);
+                MatchCollection matches = Regex.Matches(source, "{\"appid\":(\\d+),\"name\":\"(.+?)\"(.*?)}(.*?)}", RegexOptions.IgnoreCase);
 
                 if (matches.Count > 0)
                 {
@@ -220,9 +227,10 @@ namespace SteamCompanion
                         //Because some games have unicode characters, we look for \u followed by 4 characters and convert that into a single character
                         Regex rx = new Regex(@"\\[uU]([0-9A-Fa-f]{4})");
                         aux_game.name = rx.Replace(aux_game.name, match => ((char)Int32.Parse(match.Value.Substring(2), NumberStyles.HexNumber)).ToString());
-                        if (WebUtility.HtmlDecode(ma.Groups[3].Value.Trim()).Equals("hours_forever"))
+                        Match hours = Regex.Match(WebUtility.HtmlDecode(ma.Groups[3].Value.Trim()), "hours_forever\":\"(.+?)\"");
+                        if (hours.Success)
                         {
-                            float hours_played = float.Parse(WebUtility.HtmlDecode(ma.Groups[4].Value.Trim()));
+                            float hours_played = float.Parse(hours.Value.Trim());
                             if (hours_played <= 1)
                             {
                                 aux_game.tags = new List<string>();
